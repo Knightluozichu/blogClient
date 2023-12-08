@@ -8,10 +8,10 @@ export default defineConfig({
   plugins:
     [
       vue(),
-      {
-        ...viteCompression(),
-        apply: 'build',
-      },
+      // {
+      //   ...viteCompression(),
+      //   apply: 'build',
+      // },
     ],
   resolve: {
     alias: {
