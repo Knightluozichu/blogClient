@@ -4,6 +4,10 @@ const routes = [
     redirect: '/home',
   },
   {
+    path: '/signup',
+    component: () => import('@/pages/signup.vue'),
+  },
+  {
     path: '/login',
     component: () => import('@/pages/login.vue'),
   },
