@@ -49,8 +49,9 @@ const homeCartList = reactive({
           <h1 class="text-5xl font-bold">地狱火</h1>
 
           <p class="py-6">这是一个阅后即焚的网站,为你的聊天保驾护航!</p>
-
-          <button class="border border-gray-50 bg-blue-500 w-40 h-10 shadow-lg rounded-lg">开始聊天</button>
+          <router-link to="/chat">
+            <button class="border border-gray-50 bg-blue-500 w-40 h-10 shadow-lg rounded-lg">开始聊天</button>
+          </router-link>
         </div>
         <div class="lg:w-1/2 flex flex-col justify-center items-center">
           <img
