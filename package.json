@@ -8,7 +8,8 @@
     "ts": "vue-tsc --noEmit",
     "dev": "vite",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "api": "json-server --watch ./src/api/db.json"
   },
   "lint-staged": {
     "src/**/*.{vue,js,jsx,ts,tsx,json}": [
@@ -20,6 +21,7 @@
     "@vueuse/core": "^10.7.0",
     "axios": "^1.6.2",
     "pinia": "^2.1.7",
+    "uuid": "^9.0.1",
     "vue": "^3.3.8",
     "vue-router": "^4.2.5"
   },
@@ -30,12 +32,14 @@
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
     "@vitejs/plugin-vue": "^4.5.0",
+    "add": "^2.0.6",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.0.1",
     "eslint-plugin-vue": "^9.19.2",
     "husky": "^8.0.3",
+    "json-server": "^0.17.4",
     "lint-staged": "^15.2.0",
     "postcss": "^8.4.32",
     "prettier": "^3.1.0",

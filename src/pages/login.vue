@@ -1,5 +1,10 @@
 <script setup lang="ts">
+import router from '@/router';
 import { ref, watchEffect } from 'vue';
+import { useUserStore } from '@/store/user';
+import { storeToRefs } from 'pinia';
+import { v4 as uuidv4 } from 'uuid';
+
 const emailError = ref('');
 const passwordError = ref('');
 
@@ -41,6 +46,19 @@ const validateInputs = () => {
 watchEffect(() => {
   allowLogin.value = !!validateInputs();
 });
+
+const user = useUserStore();
+const { token } = storeToRefs(user);
+
+function handleSubmit() {
+  token.value.auth = uuidv4();
+  localStorage.setItem('auth', token.value.auth);
+  // userInfo.value.name = "123";
+  // userInfo.value.passworld = "123";
+  // userInfo.value.email = "123";
+  // userInfo.value.age = 123;
+  router.push('/chat');
+}
 </script>
 
 <template>
@@ -64,7 +82,7 @@ watchEffect(() => {
       </div>
       <div class="border-gray-300 w-full border-b"></div>
 
-      <form class="mt-4 w-full px-4 container">
+      <form class="mt-4 w-full px-4 container" @submit.prevent="handleSubmit">
         <!-- 邮箱 -->
         <div class="flex flex-col justify-between px-2 py-1 space-y-2">
           <div class="text-gray-500 text-sm">邮箱</div>

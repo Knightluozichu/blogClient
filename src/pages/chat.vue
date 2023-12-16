@@ -1,7 +1,106 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watchEffect, onMounted, nextTick } from 'vue';
+import { useUserStore } from '@/store/user';
+import { storeToRefs } from 'pinia';
+import router from '@/router';
+import HttpClient from '@/utils/axios';
+import { ChatDetial, ChatTitleInfo } from '@/api/ChatList';
+import { useMutationObserver } from '@vueuse/core';
 
-const chatWindowId = ref(1); //默认-1
+const chatWindowId = ref(-1); //默认-1
+const user = useUserStore();
+//检查是否登录，没有登录则跳转到登录页面，登录了就显示聊天页面
+const { token } = storeToRefs(user);
+const isLogin = ref(false);
+const chatList = ref<ChatTitleInfo[]>([]);
+const chatInfo = ref<ChatTitleInfo>();
+const auth = localStorage.getItem('auth');
+const isDarkMode = ref(false);
+const curMessage = ref('');
+
+const sendMessage = () => {
+  if (!chatInfo.value) {
+    return;
+  }
+  const mChatDetial: ChatDetial = {
+    order: chatInfo.value?.contents.length - 1,
+    type: 0,
+    content: curMessage.value,
+    time: new Date().getTime().toString(),
+    icon: '',
+    isOwner: true,
+  };
+  chatInfo.value?.contents.shift();
+  chatInfo.value?.contents.push(mChatDetial);
+  curMessage.value = '';
+  // console.log(chatList.value);
+  HttpClient.patch('/chatInfo/' + chatInfo.value.id, { contents: chatInfo.value?.contents })
+    .then(() => {
+      // console.log(res);
+      return;
+    })
+    .catch(() => {
+      // console.log(err);
+      return;
+    });
+};
+
+if (!auth) {
+  router.push('/login');
+} else {
+  token.value.auth = auth;
+  isLogin.value = true;
+}
+
+if (isLogin.value) {
+  HttpClient.get('/chatInfo').then((res: any) => {
+    // console.log(res);
+    if (res.status === 200) {
+      //把res.data用json解析成ChatList对象
+      chatList.value = res.data;
+      // console.log(chatList.value);
+    } else {
+      return;
+    }
+  });
+}
+
+function selectChat(chatId: number) {
+  chatWindowId.value = chatId;
+  const chat = chatList.value.find((chat) => chat.chatConnectId === chatId);
+  if (chat) {
+    chatInfo.value = chat;
+  } else {
+    chatInfo.value = undefined; //todo..找不到聊天信息
+  }
+}
+
+watchEffect(() => {
+  isDarkMode.value = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+});
+
+//聊天框 滑竿默认底部
+const contentRef = ref<HTMLElement | null>(null);
+
+onMounted(() => {
+  nextTick(() => {
+    setTimeout(scrollToBottom, 0); // 添加一些延迟
+  });
+});
+
+const scrollToBottom = () => {
+  if (contentRef.value) {
+    contentRef.value.scrollTop = contentRef.value.scrollHeight;
+    // console.log("滑竿到底");
+  }
+};
+
+useMutationObserver(contentRef, scrollToBottom, {
+  childList: true,
+  subtree: true,
+  characterData: true,
+  attributes: true,
+});
 </script>
 
 <template>
@@ -300,7 +399,7 @@ const chatWindowId = ref(1); //默认-1
 
           <a
             href="#"
-            class="p-1.5 inline-block text-gray-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100"
+            class="bg-blue-100 p-1.5 inline-block text-blue-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -320,7 +419,7 @@ const chatWindowId = ref(1); //默认-1
 
           <a
             href="#"
-            class="p-1.5 inline-block text-blue-500 transition-colors duration-200 bg-blue-100 rounded-lg dark:text-blue-400 dark:bg-gray-800"
+            class="p-1.5 inline-block text-gray-500 transition-colors duration-200 rounded-lg dark:text-blue-400 dark:bg-gray-800"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -455,7 +554,7 @@ const chatWindowId = ref(1); //默认-1
       </div>
 
       <div
-        class="h-screen px-5 py-8 overflow-y-auto bg-white border-l border-r w-1/3 dark:bg-gray-900 dark:border-gray-700"
+        class="h-screen px-5 py-8 overflow-y-auto bg-white border-l border-r w-1/3 dark:bg-gray-900 dark:border-gray-700 relative"
       >
         <div class="relative">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -473,15 +572,16 @@ const chatWindowId = ref(1); //默认-1
           <input
             type="text"
             class="w-full py-1.5 pl-10 pr-4 text-gray-700 bg-white border rounded-md dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 dark:focus:border-blue-300 focus:ring-blue-300 focus:ring-opacity-40 focus:outline-none focus:ring"
-            placeholder="Search"
+            placeholder="搜索"
           />
         </div>
 
         <nav class="mt-4 -mx-4">
           <div
-            v-for="id in 20"
-            :key="id"
+            v-for="(item, index) in chatList"
+            :key="index"
             class="hover:bg-gray-900 hover:cursor-pointer flex flex-row bg-gray-200 dark:bg-gray-800 px-2 py-2 border-b border-gray-500/50"
+            @click="selectChat(item.chatConnectId)"
           >
             <div class="flex justify-center items-center relative">
               <svg
@@ -516,15 +616,16 @@ const chatWindowId = ref(1); //默认-1
             </div>
             <div class="flex flex-col px-2 w-full">
               <div class="flex flex-row justify-between">
-                <div class="title text-md dark:text-white text-gray-400">用户名或群名</div>
-                <div class="title text-xs dark:text-white/50 text-gray-400">星期三</div>
+                <div class="title text-md dark:text-white text-gray-400">{{ item.name }}</div>
+                <div class="title text-xs dark:text-white/50 text-gray-400">{{ item.contents[0].time }}</div>
               </div>
 
               <div class="flex flex-row justify-between">
                 <div class="last-msg text-sm dark:text-white/50 text-start text-gray-400">
-                  最后一条聊天的消息内容...
+                  {{ item.contents[0].content }}...
                 </div>
                 <svg
+                  v-show="item.isMite"
                   width="16"
                   height="16"
                   viewBox="0 0 24 24"
@@ -537,7 +638,7 @@ const chatWindowId = ref(1); //默认-1
                   <g id="SVGRepo_iconCarrier">
                     <path
                       d="M3 3L21 21M9.37747 3.56325C10.1871 3.19604 11.0827 3 12 3C13.5913 3 15.1174 3.59 16.2426 4.6402C17.3679 5.69041 18 7.11479 18 8.6C18 10.3566 18.2892 11.7759 18.712 12.9122M17 17H15M6.45339 6.46451C6.15686 7.13542 6 7.86016 6 8.6C6 11.2862 5.3238 13.1835 4.52745 14.4866C3.75616 15.7486 3.37051 16.3797 3.38485 16.5436C3.40095 16.7277 3.43729 16.7925 3.58603 16.9023C3.71841 17 4.34762 17 5.60605 17H9M9 17V18C9 19.6569 10.3431 21 12 21C13.6569 21 15 19.6569 15 18V17M9 17H15"
-                      stroke="#ffffff"
+                      :stroke="isDarkMode ? '#ffffff' : '#000000'"
                       stroke-width="0.4800000000000001"
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -548,6 +649,14 @@ const chatWindowId = ref(1); //默认-1
             </div>
           </div>
         </nav>
+
+        <div class="flex flex-row-reverse justify-between items-start mr-4 absolute bottom-10 right-0">
+          <div
+            class="hover:cursor-pointer border border-indigo-500 bg-indigo-500 rounded-full shadow-2xl h-10 w-10 z-10 text-center flex justify-center items-center"
+          >
+            <div class="text-xl dark:text-white text-gray-700 font-bold">+</div>
+          </div>
+        </div>
       </div>
 
       <div v-if="chatWindowId === -1" class="flex container flex-col justify-center items-center space-y-6 px-40 py-12">
@@ -565,13 +674,61 @@ const chatWindowId = ref(1); //默认-1
 
         <div class="text-2xl text-black">6.人人讲安全，事事为安全；时时想安全，处处要安全</div>
       </div>
+
       <div v-else class="flex flex-col w-full h-screen">
         <div class="h-20">
-          <div class="title text-md dark:text-white text-gray-400 text-center leading-[5rem] px-10">用户名或群名</div>
+          <div class="title text-md dark:text-white text-gray-400 text-center leading-[5rem] px-10">
+            {{ chatInfo?.name }}
+          </div>
         </div>
-        <div class="content h-3/4">
-          <div class="border-b border-gray-300"></div>
+
+        <!-- 聊天内容 -->
+        <div ref="contentRef" class="content h-3/4 overflow-auto mb-2">
+          <div class="space-y-5 h-full w-full">
+            <!-- Chat Bubble -->
+            <ul v-for="(item, index) in chatInfo?.contents" :key="index" class="talk-content">
+              <li v-show="!item.isOwner" class="max-w-lg flex gap-x-2 sm:gap-x-4 me-11">
+                <span
+                  class="flex-shrink-0 inline-flex items-center justify-center h-[2.375rem] w-[2.375rem] rounded-full bg-gray-600"
+                >
+                  <img class="inline-block h-9 w-9 rounded-full" :src="item.icon" alt="Image Description" />
+                </span>
+                <!-- Card -->
+                <div
+                  class="bg-white border border-gray-200 rounded-2xl p-4 space-y-3 dark:bg-slate-900 dark:border-gray-700 whitespace-pre-line"
+                >
+                  <h2 class="font-medium text-gray-800 dark:text-white">
+                    {{ item.content }}
+                  </h2>
+                </div>
+                <!-- End Card -->
+              </li>
+              <!-- End Chat -->
+
+              <!-- Chat -->
+              <li v-show="item.isOwner" class="flex ms-auto gap-x-2 sm:gap-x-4">
+                <div class="grow text-end space-y-3">
+                  <!-- Card -->
+                  <div class="inline-block bg-blue-600 rounded-2xl p-4 shadow-sm whitespace-pre-line">
+                    <p class="text-sm text-white text-start">
+                      {{ item.content }}
+                    </p>
+                  </div>
+                  <!-- End Card -->
+                </div>
+
+                <span
+                  class="flex-shrink-0 inline-flex items-center justify-center h-[2.375rem] w-[2.375rem] rounded-full bg-gray-600"
+                >
+                  <img class="inline-block h-9 w-9 rounded-full" :src="item.icon" alt="Image Description" />
+                </span>
+              </li>
+              <!-- End Chat -->
+            </ul>
+            <!-- End Chat Bubble -->
+          </div>
         </div>
+
         <div class="border-b border-gray-300"></div>
         <div class="flex flex-col h-1/5">
           <div class="flex flex-row justify-between">
@@ -698,9 +855,18 @@ const chatWindowId = ref(1); //默认-1
             </div>
           </div>
           <div class="input-area flex flex-col justify-between border p-2 h-full py-2 mb-2">
-            <textarea class="flex-grow border-0 focus:outline-none" placeholder="发消息..."></textarea>
+            <textarea
+              v-model="curMessage"
+              class="flex-grow border-0 focus:outline-none"
+              placeholder="发消息..."
+            ></textarea>
             <div class="justify-end fixed bottom-0 right-0 mb-4 mr-2">
-              <button class="mt-2 px-4 py-2 bg-blue-500 text-white border-blue-500 shadow-lg rounded-lg">发送</button>
+              <button
+                class="mt-2 px-4 py-2 bg-blue-500 text-white border-blue-500 shadow-lg rounded-lg"
+                @click="sendMessage()"
+              >
+                发送
+              </button>
             </div>
           </div>
         </div>

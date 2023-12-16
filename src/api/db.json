@@ -1,0 +1,190 @@
+{
+  "api": {
+    "name": "api",
+    "url": "http://localhost:3080/api",
+    "version": "1.0.0"
+  },
+  "chatInfo": [
+    {
+      "id": 1,
+      "name": "hellsing",
+      "icon": "",
+      "isReadMsg": true,
+      "isMite": true,
+      "chatConnectId": 1,
+      "contents": [
+        {
+          "order": 1,
+          "type": 0,
+          "content": "是的啊.\n想去哪？黄埔江？",
+          "time": "2023/12/16 13:10",
+          "icon": "https://img.51miz.com/Element/00/38/32/98/c5945836_E383298_993c32b7.png"
+        },
+        {
+          "isOwner": true,
+          "order": 0,
+          "type": 0,
+          "content": "太冷了.",
+          "time": "2023/12/16 13:00",
+          "icon": "https://images.unsplash.com/photo-1541101767792-f9b2b1c4f127?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&&auto=format&fit=facearea&facepad=3&w=300&h=300&q=80"
+        },
+        {
+          "order": 1,
+          "type": 0,
+          "content": "五角场逛街去？",
+          "time": "2023/12/16 13:10",
+          "icon": "https://img.51miz.com/Element/00/38/32/98/c5945836_E383298_993c32b7.png"
+        },
+        {
+          "isOwner": true,
+          "order": 0,
+          "type": 0,
+          "content": "人太多啦.",
+          "time": "2023/12/16 13:00",
+          "icon": "https://images.unsplash.com/photo-1541101767792-f9b2b1c4f127?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&&auto=format&fit=facearea&facepad=3&w=300&h=300&q=80"
+        },
+        {
+          "order": 1,
+          "type": 0,
+          "content": "射箭？",
+          "time": "2023/12/16 13:10",
+          "icon": "https://img.51miz.com/Element/00/38/32/98/c5945836_E383298_993c32b7.png"
+        },
+        {
+          "isOwner": true,
+          "order": 0,
+          "type": 0,
+          "content": "手疼.",
+          "time": "2023/12/16 13:00",
+          "icon": "https://images.unsplash.com/photo-1541101767792-f9b2b1c4f127?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&&auto=format&fit=facearea&facepad=3&w=300&h=300&q=80"
+        },
+        {
+          "order": 1,
+          "type": 0,
+          "content": "街霸6？",
+          "time": "2023/12/16 13:10",
+          "icon": "https://img.51miz.com/Element/00/38/32/98/c5945836_E383298_993c32b7.png"
+        },
+        {
+          "isOwner": true,
+          "order": 0,
+          "type": 0,
+          "content": "无聊的",
+          "time": "2023/12/16 13:00",
+          "icon": "https://images.unsplash.com/photo-1541101767792-f9b2b1c4f127?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&&auto=format&fit=facearea&facepad=3&w=300&h=300&q=80"
+        },
+        {
+          "order": 1,
+          "type": 0,
+          "content": "哎呀，不去了.",
+          "time": "2023/12/16 13:10",
+          "icon": "https://img.51miz.com/Element/00/38/32/98/c5945836_E383298_993c32b7.png"
+        },
+        {
+          "order": 9,
+          "type": 0,
+          "content": "你说不去就不去？",
+          "time": "1702731054308",
+          "icon": "",
+          "isOwner": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "jimi",
+      "icon": "",
+      "isReadMsg": false,
+      "isMite": false,
+      "chatConnectId": 2,
+      "contents": [
+        {
+          "order": 1,
+          "type": 0,
+          "content": "是的啊.\n想去哪？黄埔江？",
+          "time": "2023/12/16 13:10",
+          "icon": "https://img.51miz.com/Element/00/38/32/98/c5945836_E383298_993c32b7.png"
+        },
+        {
+          "isOwner": true,
+          "order": 0,
+          "type": 0,
+          "content": "太冷了.",
+          "time": "2023/12/16 13:00",
+          "icon": "https://images.unsplash.com/photo-1541101767792-f9b2b1c4f127?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&&auto=format&fit=facearea&facepad=3&w=300&h=300&q=80"
+        },
+        {
+          "order": 1,
+          "type": 0,
+          "content": "五角场逛街去？",
+          "time": "2023/12/16 13:10",
+          "icon": "https://img.51miz.com/Element/00/38/32/98/c5945836_E383298_993c32b7.png"
+        },
+        {
+          "isOwner": true,
+          "order": 0,
+          "type": 0,
+          "content": "人太多啦.",
+          "time": "2023/12/16 13:00",
+          "icon": "https://images.unsplash.com/photo-1541101767792-f9b2b1c4f127?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&&auto=format&fit=facearea&facepad=3&w=300&h=300&q=80"
+        },
+        {
+          "order": 1,
+          "type": 0,
+          "content": "射箭？",
+          "time": "2023/12/16 13:10",
+          "icon": "https://img.51miz.com/Element/00/38/32/98/c5945836_E383298_993c32b7.png"
+        },
+        {
+          "isOwner": true,
+          "order": 0,
+          "type": 0,
+          "content": "手疼.",
+          "time": "2023/12/16 13:00",
+          "icon": "https://images.unsplash.com/photo-1541101767792-f9b2b1c4f127?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&&auto=format&fit=facearea&facepad=3&w=300&h=300&q=80"
+        },
+        {
+          "order": 1,
+          "type": 0,
+          "content": "街霸6？",
+          "time": "2023/12/16 13:10",
+          "icon": "https://img.51miz.com/Element/00/38/32/98/c5945836_E383298_993c32b7.png"
+        },
+        {
+          "isOwner": true,
+          "order": 0,
+          "type": 0,
+          "content": "无聊的",
+          "time": "2023/12/16 13:00",
+          "icon": "https://images.unsplash.com/photo-1541101767792-f9b2b1c4f127?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&&auto=format&fit=facearea&facepad=3&w=300&h=300&q=80"
+        },
+        {
+          "order": 1,
+          "type": 0,
+          "content": "哎呀，不去了.",
+          "time": "2023/12/16 13:10",
+          "icon": "https://img.51miz.com/Element/00/38/32/98/c5945836_E383298_993c32b7.png"
+        },
+        {
+          "order": 9,
+          "type": 0,
+          "content": "好\n1",
+          "time": "1702730921501",
+          "icon": "",
+          "isOwner": true
+        }
+      ]
+    }
+  ],
+  "postMsg": [
+    {
+      "\n  {\n  \"title\": \"json-server\",\n  \"author\": \"typicode\"\n}": "",
+      "id": 1
+    },
+    {
+      "title": "json-server",
+      "author": "typicode",
+      "id": 2
+    }
+  ]
+}
