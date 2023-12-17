@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { ref, watchEffect, onMounted, nextTick, onBeforeUnmount } from 'vue';
+import { ref, watchEffect, onMounted, nextTick, onBeforeUnmount, onUnmounted } from 'vue';
 import { useUserStore } from '@/store/user';
 import { storeToRefs } from 'pinia';
 import router from '@/router';
 import HttpClient from '@/utils/axios';
 import { ChatDetial, ChatTitleInfo } from '@/api/ChatList';
-// import { useMutationObserver } from '@vueuse/core';
+import { onClickOutside } from '@vueuse/core';
 
-const chatWindowId = ref(-1); //默认-1
+const chatWindowId = ref<number | undefined>(-1); //默认-1
 const user = useUserStore();
 //检查是否登录，没有登录则跳转到登录页面，登录了就显示聊天页面
 const { token, userInfo } = storeToRefs(user);
@@ -15,15 +15,20 @@ const isLogin = ref(false);
 const chatList = ref<ChatTitleInfo[]>([]);
 const chatInfo = ref<ChatTitleInfo>();
 const auth = localStorage.getItem('auth');
+const email = ref('');
 const isDarkMode = ref(false);
 const curMessage = ref('');
+const showSearchUser = ref(false);
+const addUserRef = ref<HTMLElement | null>(null);
+const addSearchUser = ref('');
+let stop: (() => void) | undefined;
 
 const sendMessage = () => {
   if (!chatInfo.value) {
     return;
   }
   const mChatDetial: ChatDetial = {
-    order: chatInfo.value?.contents.length - 1,
+    order: chatInfo.value?.contents ? chatInfo.value?.contents?.length - 1 : 0,
     type: 0,
     content: curMessage.value,
     time: new Date().getUTCDate().toString(),
@@ -31,14 +36,28 @@ const sendMessage = () => {
     isOwner: true,
     name: userInfo.value?.name,
     counter: 30,
+    chatTitleInfoId: chatInfo.value.id,
   };
   // chatInfo.value?.contents.shift();
-  chatInfo.value?.contents.push(mChatDetial);
+  if (chatInfo.value?.contents) {
+    chatInfo.value?.contents.push(mChatDetial);
+  } else {
+    chatInfo.value.contents = [mChatDetial];
+  }
   curMessage.value = '';
-  // console.log(chatList.value);
-  HttpClient.patch('/chatInfo/' + chatInfo.value.id, { contents: chatInfo.value?.contents })
+  HttpClient.post('/chatDetail', mChatDetial)
     .then(() => {
       // console.log(res);
+      // console.log(chatList.value);
+      HttpClient.patch('/chatInfo', { id: chatInfo.value?.id, contents: chatInfo.value?.contents })
+        .then(() => {
+          // console.log(res);
+          return;
+        })
+        .catch(() => {
+          // console.log(err);
+          return;
+        });
       return;
     })
     .catch(() => {
@@ -55,7 +74,9 @@ if (!auth) {
 }
 
 if (isLogin.value) {
-  HttpClient.get('/chatInfo').then((res: any) => {
+  const name = localStorage.getItem('name');
+  email.value = localStorage.getItem('email') || '';
+  HttpClient.get(`/chatInfo?name=${name}`).then((res: any) => {
     // console.log(res);
     if (res.status === 200) {
       //把res.data用json解析成ChatList对象
@@ -67,7 +88,7 @@ if (isLogin.value) {
   });
 }
 
-function selectChat(chatId: number) {
+function selectChat(chatId: number | undefined) {
   chatWindowId.value = chatId;
   const chat = chatList.value.find((chat) => chat.chatConnectId === chatId);
   if (chat) {
@@ -105,6 +126,10 @@ onMounted(() => {
   nextTick(() => {
     setTimeout(scrollToBottom, 1000); // 增加延迟
   });
+  // console.log(addUserRef.value);
+  if (addUserRef.value) {
+    stop = onClickOutside(addUserRef.value, closeOnOutsideClick);
+  }
 });
 
 // Cleanup the scroll event listener when the component is unmounted
@@ -117,6 +142,7 @@ onBeforeUnmount(() => {
 //倒计时
 const countDown = () => {
   setInterval(() => {
+    if (!chatInfo.value || !chatInfo.value.contents) return;
     if (chatInfo.value && chatInfo.value.contents.length > 0) {
       chatInfo.value.contents.forEach((item) => {
         if (item.counter > 0) {
@@ -124,16 +150,19 @@ const countDown = () => {
         }
       });
       //从数组中删除counter为0的元素
-      chatInfo.value.contents = chatInfo.value.contents.filter((item) => item.counter > 0);
-      HttpClient.patch('/chatInfo/' + chatInfo.value.id, { contents: chatInfo.value?.contents })
-        .then(() => {
-          // console.log(res);
-          return;
-        })
-        .catch(() => {
-          // console.log(err);
-          return;
-        });
+      // chatInfo.value.contents = chatInfo.value.contents.filter((item) => item.counter > 0);
+      const detail: ChatDetial = chatInfo.value.contents.filter((item) => item.counter > 0)[0];
+      if (detail) {
+        HttpClient.patch('/chatDetail', { order: detail.order })
+          .then(() => {
+            // console.log(res);
+            return;
+          })
+          .catch(() => {
+            // console.log(err);
+            return;
+          });
+      }
     }
   }, 1000);
 };
@@ -148,6 +177,7 @@ watchEffect(() => {
 });
 
 const showChatListInfoTime = (item: ChatTitleInfo) => {
+  if (!item.contents) return '';
   const len = item.contents.length;
   if (len > 0) {
     return item.contents[len - 1].time;
@@ -157,6 +187,7 @@ const showChatListInfoTime = (item: ChatTitleInfo) => {
 };
 
 const showChatListInfoContent = (item: ChatTitleInfo) => {
+  if (!item.contents) return '';
   const len = item.contents.length;
   if (len > 0) {
     return item.contents[len - 1].content;
@@ -164,6 +195,50 @@ const showChatListInfoContent = (item: ChatTitleInfo) => {
     return '';
   }
 };
+
+const handleSearchUser = () => {
+  // console.log('搜索用户');
+  HttpClient.get('/search', { params: { name: addSearchUser.value, email: addSearchUser.value } })
+    .then((res) => {
+      // console.log(res);
+      if (res.status === 200) {
+        addChatTitleInfo();
+        closeOnOutsideClick();
+      } else {
+        alert('没有找到该用户');
+      }
+    })
+    .catch(() => {
+      // console.log(err);
+    });
+};
+
+const closeOnOutsideClick = () => {
+  showSearchUser.value = false;
+};
+
+const addChatTitleInfo = () => {
+  HttpClient.post('/chatInfo', { name: addSearchUser.value, email: email.value })
+    .then((res) => {
+      // console.log(res);
+      if (res.status === 200) {
+        //把res.data用json解析成ChatList对象
+        chatList.value.push(res.data);
+        // console.log(chatList.value);
+      } else {
+        return;
+      }
+    })
+    .catch(() => {
+      // console.log(err);
+    });
+};
+
+onUnmounted(() => {
+  if (stop) {
+    stop();
+  }
+});
 </script>
 
 <template>
@@ -589,7 +664,7 @@ const showChatListInfoContent = (item: ChatTitleInfo) => {
                 </g>
               </svg>
               <span
-                v-if="chatInfo && chatInfo.contents.length > 0"
+                v-if="chatInfo && chatInfo.contents && chatInfo.contents.length > 0"
                 class="top-0 left-7 absolute w-3.5 h-3.5 bg-red-400 border-2 border-white dark:border-gray-800 rounded-full"
               ></span>
             </div>
@@ -675,7 +750,7 @@ const showChatListInfoContent = (item: ChatTitleInfo) => {
                 </g>
               </svg>
               <span
-                v-if="item.id !== chatWindowId && item.contents.length > 0"
+                v-if="item.id !== chatWindowId && item.contents && item.contents.length > 0"
                 class="top-0 left-7 absolute w-3.5 h-3.5 bg-red-400 border-2 border-white dark:border-gray-800 rounded-full"
               ></span>
             </div>
@@ -718,8 +793,68 @@ const showChatListInfoContent = (item: ChatTitleInfo) => {
         <div class="flex flex-row-reverse justify-between items-start mr-4 absolute bottom-10 right-0">
           <div
             class="hover:cursor-pointer border border-indigo-500 bg-indigo-500 rounded-full shadow-2xl h-10 w-10 z-10 text-center flex justify-center items-center"
+            @click="showSearchUser = !showSearchUser"
           >
             <div class="text-xl dark:text-white text-gray-700 font-bold">+</div>
+          </div>
+        </div>
+        <div
+          v-show="showSearchUser"
+          class="fixed z-10 inset-0 overflow-y-auto"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+            <!-- This element is to trick the browser into centering the modal contents. -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div
+              ref="addUserRef"
+              class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+            >
+              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                  <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 id="modal-title" class="text-lg leading-6 font-medium text-gray-900">找朋友</h3>
+                    <div class="mt-2">
+                      <p class="text-sm text-gray-500">输入 name 或者 email.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="relative mt-6">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg class="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      ></path>
+                    </svg>
+                  </span>
+
+                  <input
+                    v-model="addSearchUser"
+                    type="text"
+                    class="w-full py-1.5 pl-10 pr-4 text-gray-700 bg-white border rounded-md dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 dark:focus:border-blue-300 focus:ring-blue-300 focus:ring-opacity-40 focus:outline-none focus:ring"
+                    placeholder="搜索"
+                  />
+                </div>
+              </div>
+              <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  @click="handleSearchUser"
+                >
+                  确认
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

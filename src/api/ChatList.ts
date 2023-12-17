@@ -1,14 +1,14 @@
 export interface ChatTitleInfo {
-  id: number;
+  id?: number;
   name: string;
-  contents: ChatDetial[];
-  icon: string;
-  isReadMsg: boolean;
-  isMite: boolean;
-  chatConnectId: number;
+  contents?: ChatDetail[];
+  icon?: string;
+  isReadMsg?: boolean;
+  isMite?: boolean;
+  chatConnectId?: number;
 }
 
-export interface ChatDetial {
+export interface ChatDetail {
   order: number;
   type: number;
   content: any;

@@ -1,7 +1,10 @@
 <script setup lang="ts">
 localStorage.setItem('role', 'admin'); //在登录页存储用户等级
 
+import HttpClient from '@/utils/axios';
 import { ref, watchEffect } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
+
 const emailError = ref('');
 const passwordError = ref('');
 const userError = ref('');
@@ -64,6 +67,34 @@ const signup = () => {
 watchEffect(() => {
   signup();
 });
+
+const handleSubmit = () => {
+  //httpClinet post请求/register
+  //请求成功后跳转到登录页
+
+  HttpClient.post('/register', {
+    name: username.value,
+    email: email.value,
+    password: password.value,
+    // privacy: privacy.value,
+    // subscription: subscription.value
+  })
+    .then((res) => {
+      // console.log(res);
+      if (res.status === 200) {
+        localStorage.setItem('name', res.data.name);
+        localStorage.setItem('email', res.data.email);
+        localStorage.setItem('id', res.data.id);
+        localStorage.setItem('auth', uuidv4());
+        window.location.href = '/home';
+      } else {
+        alert(res.data.message);
+      }
+    })
+    .catch(() => {
+      // console.log(err);
+    });
+};
 </script>
 
 <template>
@@ -91,7 +122,7 @@ watchEffect(() => {
       <div class="px-6 border-b border-gray-300"></div>
       <div class="py-2 px-4 container">
         <!-- 用户名 -->
-        <form>
+        <form @submit.prevent="handleSubmit">
           <div class="flex flex-col justify-between px-2 mt-2 space-y-2">
             <div class="text-gray-500 text-sm">用户名</div>
             <div class="text-gray-500 text-sm">
@@ -376,9 +407,12 @@ watchEffect(() => {
       </div>
 
       <div class="text-xs text-gray-300 text-center">本网站受 reCAPTCHA 保护，并适用 Google隐私政策和服务条款。</div>
-      <div class="text-sm mt-2 text-gray-700 text-center">
-        已经有帐户？<a href="" class="text-blue-600">在此登录</a>
-      </div>
+      <router-link to="/login">
+        <div class="text-sm mt-2 text-gray-700 text-center">
+          已经有帐户？<a href="" class="text-blue-600">在此登录</a>
+        </div>
+      </router-link>
+
       <div class="text-center mb-2">
         <a href="" class="text-xs underline text-gray-400 text-center hover:text-blue-600">隐私政策</a>•
         <a href="" class="text-xs underline text-gray-400 text-center hover:text-blue-600">帮助</a>•

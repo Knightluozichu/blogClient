@@ -4,6 +4,7 @@ import { ref, watchEffect } from 'vue';
 import { useUserStore } from '@/store/user';
 import { storeToRefs } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
+import HttpClient from '@/utils/axios';
 
 const emailError = ref('');
 const passwordError = ref('');
@@ -51,13 +52,21 @@ const user = useUserStore();
 const { token } = storeToRefs(user);
 
 function handleSubmit() {
-  token.value.auth = uuidv4();
-  localStorage.setItem('auth', token.value.auth);
-  // userInfo.value.name = "123";
-  // userInfo.value.passworld = "123";
-  // userInfo.value.email = "123";
-  // userInfo.value.age = 123;
-  router.push('/chat');
+  HttpClient.get('/user', {
+    params: {
+      email: email.value,
+      password: password.value,
+    },
+  }).then(() => {
+    // console.log(res);
+    token.value.auth = uuidv4();
+    localStorage.setItem('auth', token.value.auth);
+    // userInfo.value.name = "123";
+    // userInfo.value.passworld = "123";
+    // userInfo.value.email = "123";
+    // userInfo.value.age = 123;
+    router.push('/chat');
+  });
 }
 </script>
 
@@ -336,9 +345,12 @@ function handleSubmit() {
       <!-- 声明 -->
       <div class="flex flex-col justify-center items-center px-4">
         <div class="text-xs text-gray-400 py-6">本网站受 reCAPTCHA 保护，并适用 Google 隐私政策和服务条款。</div>
-        <div class="text-sm text-gray-500 mt-4">
-          不熟悉 Sketchfab? <a href="" class="text-blue-500 hover:cursor-pointer hover:underline">创建一个帐户</a>
-        </div>
+        <router-link to="/signup">
+          <div class="text-sm text-gray-500 mt-4">
+            不熟悉 Sketchfab? <a href="" class="text-blue-500 hover:cursor-pointer hover:underline">创建一个帐户</a>
+          </div>
+        </router-link>
+
         <div class="text-gray-400 py-2">
           <a href="" class="hover:text-blue-500 hover:cursor-pointer hover:underline text-gray-400 text-xs">隐私政策</a>
           • <a href="" class="hover:text-blue-500 hover:cursor-pointer hover:underline text-gray-400 text-xs">帮助</a> •
