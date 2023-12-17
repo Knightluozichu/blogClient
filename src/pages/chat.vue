@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { ref, watchEffect, onMounted, nextTick } from 'vue';
+import { ref, watchEffect, onMounted, nextTick, onBeforeUnmount } from 'vue';
 import { useUserStore } from '@/store/user';
 import { storeToRefs } from 'pinia';
 import router from '@/router';
 import HttpClient from '@/utils/axios';
 import { ChatDetial, ChatTitleInfo } from '@/api/ChatList';
-import { useMutationObserver } from '@vueuse/core';
+// import { useMutationObserver } from '@vueuse/core';
 
 const chatWindowId = ref(-1); //默认-1
 const user = useUserStore();
 //检查是否登录，没有登录则跳转到登录页面，登录了就显示聊天页面
-const { token } = storeToRefs(user);
+const { token, userInfo } = storeToRefs(user);
 const isLogin = ref(false);
 const chatList = ref<ChatTitleInfo[]>([]);
 const chatInfo = ref<ChatTitleInfo>();
@@ -26,11 +26,13 @@ const sendMessage = () => {
     order: chatInfo.value?.contents.length - 1,
     type: 0,
     content: curMessage.value,
-    time: new Date().getTime().toString(),
+    time: new Date().getUTCDate().toString(),
     icon: '',
     isOwner: true,
+    name: userInfo.value?.name,
+    counter: 30,
   };
-  chatInfo.value?.contents.shift();
+  // chatInfo.value?.contents.shift();
   chatInfo.value?.contents.push(mChatDetial);
   curMessage.value = '';
   // console.log(chatList.value);
@@ -75,32 +77,93 @@ function selectChat(chatId: number) {
   }
 }
 
-watchEffect(() => {
-  isDarkMode.value = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-});
-
 //聊天框 滑竿默认底部
 const contentRef = ref<HTMLElement | null>(null);
 
-onMounted(() => {
-  nextTick(() => {
-    setTimeout(scrollToBottom, 0); // 添加一些延迟
-  });
-});
-
 const scrollToBottom = () => {
+  // console.log(contentRef.value);
   if (contentRef.value) {
+    contentRef.value.addEventListener('scroll', handleScroll);
     contentRef.value.scrollTop = contentRef.value.scrollHeight;
-    // console.log("滑竿到底");
+    // console.log("滑竿到底", contentRef.value.scrollTop, contentRef.value.scrollHeight);
   }
 };
 
-useMutationObserver(contentRef, scrollToBottom, {
-  childList: true,
-  subtree: true,
-  characterData: true,
-  attributes: true,
+const handleScroll = () => {
+  // Check if the user has scrolled to the bottom
+  if (contentRef.value) {
+    const isAtBottom = contentRef.value.scrollTop + contentRef.value.clientHeight >= contentRef.value.scrollHeight;
+
+    // Only scroll to the bottom automatically if the user is already at the bottom
+    if (isAtBottom) {
+      scrollToBottom();
+    }
+  }
+};
+
+onMounted(() => {
+  nextTick(() => {
+    setTimeout(scrollToBottom, 1000); // 增加延迟
+  });
 });
+
+// Cleanup the scroll event listener when the component is unmounted
+onBeforeUnmount(() => {
+  if (contentRef.value) {
+    contentRef.value.removeEventListener('scroll', handleScroll);
+  }
+});
+
+//倒计时
+const countDown = () => {
+  setInterval(() => {
+    if (chatInfo.value && chatInfo.value.contents.length > 0) {
+      chatInfo.value.contents.forEach((item) => {
+        if (item.counter > 0) {
+          item.counter--;
+        }
+      });
+      //从数组中删除counter为0的元素
+      chatInfo.value.contents = chatInfo.value.contents.filter((item) => item.counter > 0);
+      HttpClient.patch('/chatInfo/' + chatInfo.value.id, { contents: chatInfo.value?.contents })
+        .then(() => {
+          // console.log(res);
+          return;
+        })
+        .catch(() => {
+          // console.log(err);
+          return;
+        });
+    }
+  }, 1000);
+};
+
+countDown();
+
+const getDarkModel = () =>
+  (isDarkMode.value = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+watchEffect(() => {
+  getDarkModel();
+});
+
+const showChatListInfoTime = (item: ChatTitleInfo) => {
+  const len = item.contents.length;
+  if (len > 0) {
+    return item.contents[len - 1].time;
+  } else {
+    return '';
+  }
+};
+
+const showChatListInfoContent = (item: ChatTitleInfo) => {
+  const len = item.contents.length;
+  if (len > 0) {
+    return item.contents[len - 1].content;
+  } else {
+    return '';
+  }
+};
 </script>
 
 <template>
@@ -526,6 +589,7 @@ useMutationObserver(contentRef, scrollToBottom, {
                 </g>
               </svg>
               <span
+                v-if="chatInfo && chatInfo.contents.length > 0"
                 class="top-0 left-7 absolute w-3.5 h-3.5 bg-red-400 border-2 border-white dark:border-gray-800 rounded-full"
               ></span>
             </div>
@@ -611,18 +675,19 @@ useMutationObserver(contentRef, scrollToBottom, {
                 </g>
               </svg>
               <span
+                v-if="item.id !== chatWindowId && item.contents.length > 0"
                 class="top-0 left-7 absolute w-3.5 h-3.5 bg-red-400 border-2 border-white dark:border-gray-800 rounded-full"
               ></span>
             </div>
             <div class="flex flex-col px-2 w-full">
               <div class="flex flex-row justify-between">
                 <div class="title text-md dark:text-white text-gray-400">{{ item.name }}</div>
-                <div class="title text-xs dark:text-white/50 text-gray-400">{{ item.contents[0].time }}</div>
+                <div class="title text-xs dark:text-white/50 text-gray-400">{{ showChatListInfoTime(item) }}</div>
               </div>
 
               <div class="flex flex-row justify-between">
                 <div class="last-msg text-sm dark:text-white/50 text-start text-gray-400">
-                  {{ item.contents[0].content }}...
+                  {{ showChatListInfoContent(item) }}...
                 </div>
                 <svg
                   v-show="item.isMite"
@@ -697,8 +762,16 @@ useMutationObserver(contentRef, scrollToBottom, {
                 <div
                   class="bg-white border border-gray-200 rounded-2xl p-4 space-y-3 dark:bg-slate-900 dark:border-gray-700 whitespace-pre-line"
                 >
+                  <div class="flex flex-row justify-between space-x-4">
+                    <div class="text-xs text-gray-900 font-bold">{{ item.name }}</div>
+                    <div class="text-xs text-gray-200">{{ item.time }}</div>
+                  </div>
+
                   <h2 class="font-medium text-gray-800 dark:text-white">
                     {{ item.content }}
+                    <div class="flex justify-end items-end">
+                      <div class="text-md text-gray-400">{{ item.counter }}s</div>
+                    </div>
                   </h2>
                 </div>
                 <!-- End Card -->
@@ -710,9 +783,16 @@ useMutationObserver(contentRef, scrollToBottom, {
                 <div class="grow text-end space-y-3">
                   <!-- Card -->
                   <div class="inline-block bg-blue-600 rounded-2xl p-4 shadow-sm whitespace-pre-line">
-                    <p class="text-sm text-white text-start">
+                    <div class="flex flex-row justify-between space-x-4">
+                      <div class="text-xs text-gray-900 font-bold">{{ userInfo.name }}</div>
+                      <div class="text-xs text-gray-200">{{ item.time }}</div>
+                    </div>
+                    <p class="text-sm text-white text-start mt-2">
                       {{ item.content }}
                     </p>
+                    <div class="flex justify-start">
+                      <div class="text-md text-gray-400">{{ item.counter }}s</div>
+                    </div>
                   </div>
                   <!-- End Card -->
                 </div>

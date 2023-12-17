@@ -15,6 +15,8 @@ export interface ChatDetial {
   time: string;
   icon: string;
   isOwner: boolean;
+  name: string;
+  counter: number;
 }
 
 export enum contentType {
