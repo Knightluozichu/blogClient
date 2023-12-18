@@ -4,7 +4,7 @@ import { useUserStore } from '@/store/user';
 import { storeToRefs } from 'pinia';
 import router from '@/router';
 import HttpClient from '@/utils/axios';
-import { ChatDetial, ChatTitleInfo } from '@/api/ChatList';
+import { ChatDetail, ChatTitleInfo } from '@/api/ChatList';
 import { onClickOutside } from '@vueuse/core';
 
 const chatWindowId = ref<number | undefined>(-1); //默认-1
@@ -27,37 +27,43 @@ const sendMessage = () => {
   if (!chatInfo.value) {
     return;
   }
-  const mChatDetial: ChatDetial = {
-    order: chatInfo.value?.contents ? chatInfo.value?.contents?.length - 1 : 0,
+  const order = chatInfo.value?.contents ? chatInfo.value?.contents?.length - 1 : 0;
+  const chatTitleInfoId = chatInfo.value.id || '0';
+  const userName = userInfo.value?.name || '';
+
+  HttpClient.post('/chatDetail', {
+    order: order,
     type: 0,
     content: curMessage.value,
     time: new Date().getUTCDate().toString(),
     icon: '',
     isOwner: true,
-    name: userInfo.value?.name,
+    name: userName,
     counter: 30,
-    chatTitleInfoId: chatInfo.value.id,
-  };
-  // chatInfo.value?.contents.shift();
-  if (chatInfo.value?.contents) {
-    chatInfo.value?.contents.push(mChatDetial);
-  } else {
-    chatInfo.value.contents = [mChatDetial];
-  }
-  curMessage.value = '';
-  HttpClient.post('/chatDetail', mChatDetial)
-    .then(() => {
+    chatTitleInfoId: chatTitleInfoId,
+  })
+    .then((res) => {
       // console.log(res);
-      // console.log(chatList.value);
-      HttpClient.patch('/chatInfo', { id: chatInfo.value?.id, contents: chatInfo.value?.contents })
-        .then(() => {
-          // console.log(res);
-          return;
-        })
-        .catch(() => {
-          // console.log(err);
-          return;
-        });
+      if (res.status == 200 && chatInfo.value) {
+        const mChatDetial: ChatDetail = {
+          id: res.data.id,
+          order: res.data.order,
+          type: res.data.type,
+          content: res.data.content,
+          time: res.data.tiem,
+          icon: res.data.icon,
+          isOwner: res.data.isOwner,
+          name: res.data.name,
+          counter: res.data.counter,
+          chatTitleInfoId: res.data.chatTitleInfoId,
+        };
+        if (chatInfo.value?.contents) {
+          chatInfo.value?.contents.push(mChatDetial);
+        } else {
+          chatInfo.value.contents = [mChatDetial];
+        }
+      }
+
       return;
     })
     .catch(() => {
@@ -93,6 +99,7 @@ function selectChat(chatId: number | undefined) {
   const chat = chatList.value.find((chat) => chat.chatConnectId === chatId);
   if (chat) {
     chatInfo.value = chat;
+    // console.log(chatInfo.value, chat);
   } else {
     chatInfo.value = undefined; //todo..找不到聊天信息
   }
@@ -151,9 +158,12 @@ const countDown = () => {
       });
       //从数组中删除counter为0的元素
       // chatInfo.value.contents = chatInfo.value.contents.filter((item) => item.counter > 0);
-      const detail: ChatDetial = chatInfo.value.contents.filter((item) => item.counter > 0)[0];
-      if (detail) {
-        HttpClient.patch('/chatDetail', { order: detail.order })
+      const detail: ChatDetail = chatInfo.value.contents.filter((item) => item.counter <= 0)[0];
+      chatInfo.value.contents = chatInfo.value.contents.filter((item) => item.counter > 0);
+      if (detail && detail.id) {
+        // chatInfo.value.contents 移除 detail
+        // console.log(detail.id);
+        HttpClient.delete('/chatDetail', { params: { id: detail.id } })
           .then(() => {
             // console.log(res);
             return;

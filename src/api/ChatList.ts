@@ -1,5 +1,5 @@
 export interface ChatTitleInfo {
-  id?: number;
+  id?: string;
   name: string;
   contents?: ChatDetail[];
   icon?: string;
@@ -9,6 +9,7 @@ export interface ChatTitleInfo {
 }
 
 export interface ChatDetail {
+  id: string;
   order: number;
   type: number;
   content: any;
@@ -17,6 +18,7 @@ export interface ChatDetail {
   isOwner: boolean;
   name: string;
   counter: number;
+  chatTitleInfoId: string;
 }
 
 export enum contentType {
