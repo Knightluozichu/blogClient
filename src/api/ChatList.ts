@@ -1,11 +1,24 @@
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  password: string;
+  isOnline: boolean;
+  chatTitleInfoIDs: string[];
+  chatTitleInfos: ChatTitleInfo[];
+}
+
 export interface ChatTitleInfo {
   id?: string;
   name: string;
-  contents?: ChatDetail[];
   icon?: string;
   isReadMsg?: boolean;
   isMite?: boolean;
   chatConnectId?: number;
+  contents?: ChatDetail[];
+  userIDs: string[];
+  users: User[];
+  chatDetails: ChatDetail[];
 }
 
 export interface ChatDetail {
@@ -18,7 +31,8 @@ export interface ChatDetail {
   isOwner: boolean;
   name: string;
   counter: number;
-  chatTitleInfoId: string;
+  chatInfoConnectId: number;
+  ChatTitleInfo: ChatTitleInfo;
 }
 
 export enum contentType {

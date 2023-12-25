@@ -6,6 +6,7 @@ import router from '@/router';
 import HttpClient from '@/utils/axios';
 import { ChatDetail, ChatTitleInfo } from '@/api/ChatList';
 import { onClickOutside } from '@vueuse/core';
+// import socket from '@/utils/socket';
 
 const chatWindowId = ref<number | undefined>(-1); //默认-1
 const user = useUserStore();
@@ -14,7 +15,7 @@ const { token, userInfo } = storeToRefs(user);
 const isLogin = ref(false);
 const chatList = ref<ChatTitleInfo[]>([]);
 const chatInfo = ref<ChatTitleInfo>();
-const auth = localStorage.getItem('auth');
+const sessionId = localStorage.getItem('sessionId');
 const email = ref('');
 const isDarkMode = ref(false);
 const curMessage = ref('');
@@ -45,18 +46,7 @@ const sendMessage = () => {
     .then((res) => {
       // console.log(res);
       if (res.status == 200 && chatInfo.value) {
-        const mChatDetial: ChatDetail = {
-          id: res.data.id,
-          order: res.data.order,
-          type: res.data.type,
-          content: res.data.content,
-          time: res.data.tiem,
-          icon: res.data.icon,
-          isOwner: res.data.isOwner,
-          name: res.data.name,
-          counter: res.data.counter,
-          chatTitleInfoId: res.data.chatTitleInfoId,
-        };
+        const mChatDetial: ChatDetail = res.data as ChatDetail;
         if (chatInfo.value?.contents) {
           chatInfo.value?.contents.push(mChatDetial);
         } else {
@@ -72,21 +62,38 @@ const sendMessage = () => {
     });
 };
 
-if (!auth) {
+if (!sessionId) {
   router.push('/login');
 } else {
-  token.value.auth = auth;
+  // const res = await HttpClient.get("/login", { params: { sessionId: sessionId } });
+  // if(res.status == 200)
+  // {
+  // sessionId 鉴别 todo...
+  token.value.sessionId = sessionId;
   isLogin.value = true;
+  // }
 }
+
+// socket.on('check.ChatTitleInfos', (msg: string) => {
+//   console.log(msg);
+// });
 
 if (isLogin.value) {
   const name = localStorage.getItem('name');
   email.value = localStorage.getItem('email') || '';
-  HttpClient.get(`/chatInfo?name=${name}`).then((res: any) => {
+  HttpClient.get(`/chatInfo?name=${name}`).then((res) => {
     // console.log(res);
     if (res.status === 200) {
       //把res.data用json解析成ChatList对象
-      chatList.value = res.data;
+      // res.data.forEach((element: any) => {
+      //   socket.emit('check.ChatTitleInfos', { userIds: element.userIds, sessionId: sessionId });
+      // });
+      for (let i = 0; i < res.data.length; i++) {
+        const item = res.data[i];
+        const chatTitleInfo: ChatTitleInfo = item as ChatTitleInfo;
+        chatList.value.push(chatTitleInfo);
+      }
+      // chatList.value = res.data;
       // console.log(chatList.value);
     } else {
       return;
@@ -228,6 +235,9 @@ const closeOnOutsideClick = () => {
 };
 
 const addChatTitleInfo = () => {
+  // console.log(addSearchUser.value, email.value);
+  //遍历chatList.value
+
   HttpClient.post('/chatInfo', { name: addSearchUser.value, email: email.value })
     .then((res) => {
       // console.log(res);

@@ -3,8 +3,8 @@ import router from '@/router';
 import { ref, watchEffect } from 'vue';
 import { useUserStore } from '@/store/user';
 import { storeToRefs } from 'pinia';
-import { v4 as uuidv4 } from 'uuid';
 import HttpClient from '@/utils/axios';
+import { User } from '@/api/ChatList';
 
 const emailError = ref('');
 const passwordError = ref('');
@@ -49,7 +49,7 @@ watchEffect(() => {
 });
 
 const user = useUserStore();
-const { token } = storeToRefs(user);
+const { token, userInfo } = storeToRefs(user);
 
 function handleSubmit() {
   HttpClient.get('/user', {
@@ -57,15 +57,19 @@ function handleSubmit() {
       email: email.value,
       password: password.value,
     },
-  }).then(() => {
+  }).then((res) => {
     // console.log(res);
-    token.value.auth = uuidv4();
-    localStorage.setItem('auth', token.value.auth);
-    // userInfo.value.name = "123";
-    // userInfo.value.passworld = "123";
-    // userInfo.value.email = "123";
-    // userInfo.value.age = 123;
-    router.push('/chat');
+    if (res.status == 200) {
+      token.value.sessionId = res.data.sessionId;
+      userInfo.value = res.data.user as User;
+      // console.log(userInfo.value);
+      localStorage.setItem('sessionId', res.data.sessionId);
+      localStorage.setItem('name', res.data.user.name);
+      localStorage.setItem('passworld', res.data.user.passworld);
+      localStorage.setItem('email', res.data.user.email);
+      localStorage.setItem('uid', res.data.user.id);
+      router.push('/chat');
+    }
   });
 }
 </script>

@@ -3,7 +3,6 @@ localStorage.setItem('role', 'admin'); //在登录页存储用户等级
 
 import HttpClient from '@/utils/axios';
 import { ref, watchEffect } from 'vue';
-import { v4 as uuidv4 } from 'uuid';
 
 const emailError = ref('');
 const passwordError = ref('');
@@ -85,8 +84,8 @@ const handleSubmit = () => {
         localStorage.setItem('name', res.data.name);
         localStorage.setItem('email', res.data.email);
         localStorage.setItem('id', res.data.id);
-        localStorage.setItem('auth', uuidv4());
-        window.location.href = '/home';
+        // localStorage.setItem('sessionId',res.data.sessionId);
+        window.location.href = '/login';
       } else {
         alert(res.data.message);
       }

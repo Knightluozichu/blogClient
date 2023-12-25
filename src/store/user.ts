@@ -1,38 +1,38 @@
 import { defineStore } from 'pinia';
+import { User } from '@/api/ChatList';
 
 // defineStore 第一个参数是id，必需且值唯一
 export const useUserStore = defineStore('user', {
   //state返回一个函数，防止作用域污染
   state: () => {
+    const userInfo: User = {
+      id: '',
+      email: '',
+      name: '',
+      password: '',
+      isOnline: false,
+      chatTitleInfoIDs: [],
+      chatTitleInfos: [],
+    };
     return {
-      userInfo: {
-        email: '',
-        passworld: '',
-        name: 'zhangsan',
-        age: 23,
-        uid: '',
-      },
+      userInfo,
       token: {
-        auth: '',
+        sessionId: '',
       },
     };
   },
   getters: {
     newName: (state) => state.userInfo.name + 'vip',
-    newAuth: (state) => state.token.auth + '',
+    newSessionId: (state) => state.token.sessionId + '',
   },
   actions: {
     //更新整个对象
-    updateUserInfo(userInfo: { name: string; age: number; passworld: string; email: string; uid: string }) {
+    updateUserInfo(userInfo: User) {
       this.userInfo = userInfo;
     },
-    //更新对象中某个属性
-    updateAge(age: number) {
-      this.userInfo.age = age;
-    },
     //更新基础数据类型
-    updateAuth(auth: string) {
-      this.token.auth = auth;
+    updateSessionId(sessionId: string) {
+      this.token.sessionId = sessionId;
     },
   },
 });
