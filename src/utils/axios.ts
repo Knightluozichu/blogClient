@@ -14,7 +14,12 @@ const HttpClient = axios.create({
  */
 HttpClient.interceptors.request.use(
   (config) => {
-    const token = '222';
+    // let token = '222';
+    let token = window.localStorage.getItem('accessToken');
+    if (!token) {
+      console.error('token不存在');
+      token = 'null';
+    }
     config.headers.authorization = 'Bearer ' + token;
     return config;
   },

@@ -68,6 +68,7 @@ function handleSubmit() {
       localStorage.setItem('passworld', res.data.user.passworld);
       localStorage.setItem('email', res.data.user.email);
       localStorage.setItem('uid', res.data.user.id);
+      localStorage.setItem('accessToken', res.data.accessToken);
       router.push('/chat');
     }
   });
